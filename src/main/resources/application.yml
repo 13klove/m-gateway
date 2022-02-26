@@ -1,0 +1,48 @@
+server:
+  port: 8071
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    server-url:
+      defaultZone: http://localhost:8761/eureka
+
+spring:
+  application:
+    name: m-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: m-user
+          uri: lb://m-user
+          predicates:
+            - Path=/account/users,/account/users/login
+            - Method=POST
+          filters:
+            - RewritePath=/account(?<path>/?.*), $\{path}
+        - id: m-user
+          uri: lb://m-user
+          predicates:
+            - Path=/account/**
+          filters:
+            - RewritePath=/account(?<path>/?.*), $\{path}
+            - TokenFilter
+        - id: m-auth
+          uri: lb://m-auth
+          predicates:
+            - Path=/auth/**
+          filters:
+            - RewritePath=/auth(?<path>/?.*), $\{path}
+            - TokenFilter
+        - id: m-link
+          uri: lb://m-link
+          predicates:
+            - Path=/contents/**
+          filters:
+            - RewritePath=/contents(?<path>/?.*), $\{path}
+            - TokenFilter
+
+service:
+  auth:
+    url: http://localhost:8081/
